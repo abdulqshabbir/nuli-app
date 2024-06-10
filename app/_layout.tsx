@@ -1,37 +1,43 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { FontSource, useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Stack } from "expo-router";
+import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
+import { useFonts, FontSource } from "expo-font";
+import { ActivityIndicator } from "react-native";
+import { Colors } from "@/constants/Colors";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync().catch(console.error);
+const client = new ApolloClient({
+  uri: "http://localhost:3001/graphql",
+  cache: new InMemoryCache(),
+});
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf') as FontSource,
+  const [loaded, error] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf") as FontSource,
+    OpenSans: require("../assets/fonts/OpenSans-Regular.ttf") as FontSource,
+    OpenSansLight: require("../assets/fonts/OpenSans-Light.ttf") as FontSource,
+    OpenSansBold: require("../assets/fonts/OpenSans-Bold.ttf") as FontSource,
+    OpenSansSemiBold:
+      require("../assets/fonts/OpenSans-SemiBold.ttf") as FontSource,
+    WorkSans: require("../assets/fonts/WorkSans-Regular.ttf") as FontSource,
+    WorkSansBold: require("../assets/fonts/WorkSans-Bold.ttf") as FontSource,
+    WorkSansSemiBold:
+      require("../assets/fonts/WorkSans-SemiBold.ttf") as FontSource,
+    WorkSansLight: require("../assets/fonts/WorkSans-Light.ttf") as FontSource,
   });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync().catch(console.error);
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
+  if (error) {
+    console.error(error);
   }
-
+  if (!loaded) {
+    return (
+      <ActivityIndicator
+        style={{ backgroundColor: Colors.light.background, height: "100%" }}
+      />
+    );
+  }
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+    <ApolloProvider client={client}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
       </Stack>
-    </ThemeProvider>
+    </ApolloProvider>
   );
 }
