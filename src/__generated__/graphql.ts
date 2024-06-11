@@ -20,11 +20,23 @@ export type Exercise = {
   __typename?: 'Exercise';
   durationInMinutes: Scalars['Int']['output'];
   equipment?: Maybe<Scalars['String']['output']>;
+  exerciseGroup: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   reps: Scalars['String']['output'];
   sets: Scalars['Int']['output'];
   workoutId: Scalars['Int']['output'];
+};
+
+export type Mutation = {
+  __typename?: 'Mutation';
+  swapExercises: Array<Workout>;
+};
+
+
+export type MutationSwapExercisesArgs = {
+  exerciseId: Scalars['Int']['input'];
+  workoutId: Scalars['Int']['input'];
 };
 
 export type Query = {
@@ -43,7 +55,7 @@ export type Workout = {
 export type GetWorkoutsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetWorkoutsQuery = { __typename?: 'Query', workouts: Array<{ __typename?: 'Workout', id: number, durationInMinutes: number, exercises: Array<{ __typename?: 'Exercise', id: number }> }> };
+export type GetWorkoutsQuery = { __typename?: 'Query', workouts: Array<{ __typename?: 'Workout', id: number, durationInMinutes: number, numberOfExercises: number, exercises: Array<{ __typename?: 'Exercise', id: number, name: string, sets: number, reps: string, equipment?: string | null, durationInMinutes: number, workoutId: number, exerciseGroup: string }> }> };
 
 
-export const GetWorkoutsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getWorkouts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workouts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"durationInMinutes"}},{"kind":"Field","name":{"kind":"Name","value":"exercises"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<GetWorkoutsQuery, GetWorkoutsQueryVariables>;
+export const GetWorkoutsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"getWorkouts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"workouts"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"durationInMinutes"}},{"kind":"Field","name":{"kind":"Name","value":"numberOfExercises"}},{"kind":"Field","name":{"kind":"Name","value":"exercises"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"sets"}},{"kind":"Field","name":{"kind":"Name","value":"reps"}},{"kind":"Field","name":{"kind":"Name","value":"equipment"}},{"kind":"Field","name":{"kind":"Name","value":"durationInMinutes"}},{"kind":"Field","name":{"kind":"Name","value":"workoutId"}},{"kind":"Field","name":{"kind":"Name","value":"exerciseGroup"}}]}}]}}]}}]} as unknown as DocumentNode<GetWorkoutsQuery, GetWorkoutsQueryVariables>;
