@@ -5,16 +5,50 @@ import { Ionicons } from "@expo/vector-icons";
 import Entypo from "@expo/vector-icons/Entypo";
 import { ImageRequireSource, StyleSheet, Image } from "react-native";
 import { ThemedCircleButton } from "../ThemedButton";
-
-type Exercise = {
-  exerciseId: number;
-  exerciseDescription: string;
-  sets: number;
-  reps: string;
-  weight?: string;
+import { type Workout } from "@/src/__generated__/graphql";
+import { gql, useMutation } from "@apollo/client";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+type GroupedExercises = {
+  groupName: string;
+  exercises: Exercise[];
 };
 
-export function Workouts() {
+export function Workouts({ workouts }: { workouts: Workout[] }) {
+  const firstWorkout = workouts[0];
+  const exercisesGrouped = firstWorkout.exercises.reduce(
+    (grouped: GroupedExercises[], exercise) => {
+      if (!exercise.exerciseGroup) {
+        return grouped;
+      }
+      const groupIdx = grouped.findIndex(
+        (g) => g.groupName === exercise.exerciseGroup,
+      );
+      if (groupIdx === -1) {
+        grouped.push({
+          groupName: exercise.exerciseGroup,
+          exercises: [
+            {
+              exerciseId: exercise.id,
+              exerciseDescription: exercise.name,
+              sets: exercise.sets,
+              reps: exercise.reps,
+              // weight: exercise.weight,
+            },
+          ],
+        });
+      } else {
+        grouped[groupIdx].exercises.push({
+          exerciseId: exercise.id,
+          exerciseDescription: exercise.name,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          // weight: exercise.weight,
+        });
+      }
+      return grouped;
+    },
+    [],
+  );
   return (
     <ThemedView
       style={{
@@ -50,102 +84,53 @@ export function Workouts() {
             fontFamily: "Open Sans Light",
           }}
         >
-          60 Min • 11 Exercises
+          {firstWorkout.durationInMinutes} Min •{" "}
+          {firstWorkout.numberOfExercises} Exercises
         </ThemedText>
       </ThemedView>
-      <ExerciseGroup
-        groupName="Superset • 3 Rounds"
-        exercises={[
-          {
-            exerciseId: 3,
-            exerciseDescription: "Cable Kickback (Left)",
-            sets: 3,
-            reps: "15 reps",
-          },
-          {
-            exerciseId: 4,
-            exerciseDescription: "Cable Kickback (Right)",
-            sets: 3,
-            reps: "15 reps",
-          },
-          {
-            exerciseId: 5,
-            exerciseDescription: "Sumo Deadlift",
-            sets: 4,
-            reps: "10-12 reps",
-            weight: "90kg",
-          },
-          {
-            exerciseId: 4,
-            exerciseDescription: "Dumbell Shoulder Press",
-            sets: 4,
-            reps: "8 reps",
-            weight: "18-25kg",
-          },
-        ]}
-      />
-      <ExerciseGroup
-        groupName="Triset • 4 Rounds"
-        exercises={[
-          {
-            exerciseId: 7,
-            exerciseDescription: "Single Arm Cable Row (Left)",
-            sets: 4,
-            reps: "10-12 reps",
-          },
-          {
-            exerciseId: 8,
-            exerciseDescription: "Single Arm Cable Row (Right)",
-            sets: 4,
-            reps: "10-12 reps",
-          },
-          {
-            exerciseId: 9,
-            exerciseDescription: "Cable Seated Rows",
-            sets: 4,
-            reps: "6-8 reps",
-          },
-        ]}
-      />
-      <ExerciseGroup
-        groupName="Triset • 4 Rounds"
-        exercises={[
-          {
-            exerciseId: 10,
-            exerciseDescription: "Dumbbell Jump Squat",
-            sets: 1,
-            reps: "1 rep",
-          },
-          {
-            exerciseId: 11,
-            exerciseDescription: "Barbell Lunge",
-            sets: 1,
-            reps: "1 rep",
-          },
-          {
-            exerciseId: 12,
-            exerciseDescription: "Plank With Stability Ball",
-            sets: 1,
-            reps: "20 sec",
-          },
-          {
-            exerciseId: 12,
-            exerciseDescription: "Glute Bridge Hold",
-            sets: 1,
-            reps: "40 sec",
-          },
-        ]}
-      />
+      {exercisesGrouped.map((group) => {
+        return (
+          <ExerciseGroup
+            key={group.groupName}
+            groupName={group.groupName}
+            exercises={group.exercises}
+            workoutId={firstWorkout.id}
+          />
+        );
+      })}
     </ThemedView>
   );
+}
+
+type Exercise = {
+  exerciseId: number;
+  exerciseDescription: string;
+  sets: number;
+  reps: string;
+  weight?: string;
+};
+
+function getFullGroupName(groupName: string) {
+  if (groupName === "superset") {
+    return "Super Set • 4 rouds";
+  }
+  if (groupName === "triset") {
+    return "Tri Set • 4 rouds";
+  }
+  if (groupName === "circuit") {
+    return "Circuit • 4 rouds";
+  }
+  return groupName;
 }
 
 function ExerciseGroup({
   groupName,
   exercises,
+  workoutId,
 }: {
   groupName: string;
   exercises: Exercise[];
+  workoutId: number;
 }) {
   return (
     <ThemedView>
@@ -159,7 +144,7 @@ function ExerciseGroup({
           height: 32,
         }}
       >
-        {groupName}
+        {getFullGroupName(groupName)}
       </ThemedText>
       <ThemedView
         style={{
@@ -171,13 +156,15 @@ function ExerciseGroup({
           borderRadius: 28,
         }}
       >
-        {exercises.map((e) => (
+        {exercises.map((e, i) => (
           <ExerciseItem
+            key={`${e.exerciseId}-${i}`}
             exerciseId={e.exerciseId}
             exerciseDescription={e.exerciseDescription}
             sets={e.sets}
             reps={e.reps}
             weight={e.weight}
+            workoutId={workoutId}
           />
         ))}
       </ThemedView>
@@ -185,21 +172,45 @@ function ExerciseGroup({
   );
 }
 
+const SWAP_WORKOUTS = gql(`
+mutation swapExercises($workoutId: Int!, $exerciseId: Int!) {
+  swapExercises(workoutId: $workoutId, exerciseId: $exerciseId) {
+    id
+    durationInMinutes
+    numberOfExercises
+    exercises {
+      id
+      name
+      sets
+      reps
+      equipment
+      durationInMinutes
+      workoutId
+      exerciseGroup
+    }
+  }
+}`);
+
 function ExerciseItem({
   exerciseId,
   exerciseDescription,
   sets,
   reps,
   weight,
+  workoutId,
 }: {
   exerciseId: number;
   exerciseDescription: string;
   sets: number;
   reps: string;
   weight?: string;
+  workoutId: number;
 }) {
+  const [swapWorkouts, { loading }] = useMutation(SWAP_WORKOUTS);
   return (
-    <ThemedView
+    <Animated.View
+      entering={FadeIn}
+      exiting={FadeOut}
       style={{
         display: "flex",
         flexDirection: "row",
@@ -259,13 +270,28 @@ function ExerciseItem({
         }}
       >
         <ThemedCircleButton
-          icon={<Ionicons name="shuffle" size={14} color="white" />}
+          disabled={loading}
+          icon={
+            <Ionicons
+              onPress={() => {
+                swapWorkouts({
+                  variables: {
+                    workoutId: workoutId,
+                    exerciseId: exerciseId,
+                  },
+                }).catch(console.error);
+              }}
+              name="shuffle"
+              size={14}
+              color="white"
+            />
+          }
         />
         <ThemedCircleButton
           icon={<Entypo name="dots-three-horizontal" size={14} color="white" />}
         />
       </ThemedView>
-    </ThemedView>
+    </Animated.View>
   );
 }
 
@@ -277,6 +303,28 @@ const getImageForWorkout = (exerciseId: number) => {
       height: 100,
     },
   });
+  if (exerciseId === 1) {
+    return (
+      <Image
+        source={
+          require("@/assets/images/exercises/1.png") as ImageRequireSource
+        }
+        style={styles.image}
+        resizeMode="contain"
+      />
+    );
+  }
+  if (exerciseId === 2) {
+    return (
+      <Image
+        source={
+          require("@/assets/images/exercises/2.png") as ImageRequireSource
+        }
+        style={styles.image}
+        resizeMode="contain"
+      />
+    );
+  }
   if (exerciseId === 3) {
     return (
       <Image

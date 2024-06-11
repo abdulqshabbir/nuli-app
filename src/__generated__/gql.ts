@@ -13,7 +13,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  */
 const documents = {
-    "\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      exercises {\n        id\n      }\n    }\n  }\n": types.GetWorkoutsDocument,
+    "\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      numberOfExercises\n      exercises {\n        id\n        name\n        sets\n        reps\n        equipment\n        durationInMinutes\n        workoutId\n        exerciseGroup\n      }\n    }\n  }\n": types.GetWorkoutsDocument,
 };
 
 /**
@@ -33,7 +33,7 @@ export function gql(source: string): unknown;
 /**
  * The gql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function gql(source: "\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      exercises {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      exercises {\n        id\n      }\n    }\n  }\n"];
+export function gql(source: "\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      numberOfExercises\n      exercises {\n        id\n        name\n        sets\n        reps\n        equipment\n        durationInMinutes\n        workoutId\n        exerciseGroup\n      }\n    }\n  }\n"): (typeof documents)["\n  query getWorkouts {\n    workouts {\n      id\n      durationInMinutes\n      numberOfExercises\n      exercises {\n        id\n        name\n        sets\n        reps\n        equipment\n        durationInMinutes\n        workoutId\n        exerciseGroup\n      }\n    }\n  }\n"];
 
 export function gql(source: string) {
   return (documents as any)[source] ?? {};
